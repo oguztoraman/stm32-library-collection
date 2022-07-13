@@ -4,7 +4,7 @@ Some useful header-only C++ libraries for STM32 micro-controllers based on STM32
 
 ## Requirements
 
-+ C++20
++ Modern C++ (C++11, C++17, C++20)
 + STM32CubeIDE
 
 ## How to use these libraries on STM32CubeIDE
