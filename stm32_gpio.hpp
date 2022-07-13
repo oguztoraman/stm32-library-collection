@@ -20,7 +20,7 @@
 static_assert(false, "HAL GPIO module is not enabled!");
 #endif /* module check */
 
-static_assert(__cplusplus >= 201103L, "C++11 required!");
+static_assert(__cplusplus >= 201703L, "C++17 required!");
 
 namespace stm32 {
 
@@ -49,6 +49,7 @@ struct gpio_input : gpio_base {
 	: gpio_base(gpio, pin)
 	{ }
 
+	[[nodiscard]]
 	GPIO_PinState read() const noexcept
 	{
 		return HAL_GPIO_ReadPin(gpio_base::m_gpio, gpio_base::m_pin);
