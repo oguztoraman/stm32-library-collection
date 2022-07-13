@@ -20,7 +20,10 @@
 static_assert(false, "HAL GPIO module is not enabled!");
 #endif /* module check */
 
+static_assert(__cplusplus >= 201103L, "C++11 required!");
+
 namespace stm32 {
+
 class gpio_base {
 public:
 	static constexpr auto Low = GPIO_PinState::GPIO_PIN_RESET;
