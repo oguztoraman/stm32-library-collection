@@ -42,26 +42,26 @@ public:
 		HAL_TIM_Base_Stop(m_timer);
 	}
 
-	void set_us(std::uint32_t us) noexcept
+	void set(std::uint32_t us) noexcept
 	{
 		__HAL_TIM_SET_COUNTER(m_timer, us);
 	}
 
 	[[nodiscard]]
-	std::uint32_t get_us() const noexcept
+	std::uint32_t get() const noexcept
 	{
 		return __HAL_TIM_GET_COUNTER(m_timer);
 	}
 
-	void sleep_for_us(std::uint32_t us) noexcept
+	void sleep_for(std::uint32_t us) noexcept
 	{
 		reset();
-		while(get_us() < us);
+		while(get() < us);
 	}
 
 	void reset() noexcept
 	{
-		set_us(0);
+		set(0);
 	}
 
 private:
