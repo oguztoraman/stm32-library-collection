@@ -1,5 +1,5 @@
 /*
- * stm32_servo.hpp
+ * stm32_pwm.hpp
  *
  * Copyright (c) 2022 Oğuz Toraman oguz.toraman@protonmail.com
  * All rights reserved.
@@ -10,8 +10,8 @@
  *
  */
 
-#ifndef STM32_SERVO_HPP
-#define STM32_SERVO_HPP
+#ifndef STM32_PWM_HPP
+#define STM32_PWM_HPP
 
 #include <cmath>
 #include <cstdint>
@@ -33,7 +33,7 @@ namespace stm32 {
   *
   */
 struct stm32_double {
-    constexpr stm32_double(double value) noexcept
+	consteval stm32_double(double value) noexcept
         : m_power_of_ten{
             [](double d){
                 if (d < 0){
@@ -56,14 +56,14 @@ struct stm32_double {
         )}
     { }
 
-    constexpr operator double() const noexcept
+    consteval operator double() const noexcept
     {
         return m_value/power(ten, m_power_of_ten);
     }
 
-    static constexpr double power(double base, double exponent) noexcept
+    static consteval double power(double base, double exponent) noexcept
     {
-        while(exponent--){
+        while (exponent--){
             base *= base;
         }
         return base;
@@ -71,39 +71,38 @@ struct stm32_double {
 
     std::int32_t m_power_of_ten;
     std::int32_t m_value;
-    static constexpr int ten = 10;
+    static constexpr double ten = 10.;
 };
 
 /**
-  * @brief A servo class to facilitate the use of
-  * 	   servo motors with STM32 development boards
+  * @brief A pwm class for STM32 development boards
   *
-  * Note: A servo class object must be defined
+  * Note: A pwm class object must be defined
   * 	  after all the initializing operations,
-  * 	  for example, in the USER CODE 2 section
+  * 	  for example, in the USER CODE 2 section.
   */
-template <int MinDegree, int MaxDegree, int DefaultDegree,
+template <int MinInput, int MaxInput, int DefaultInput,
 		  stm32_double PWMDutyMin, stm32_double PWMDutyMax>
 #else
 /* the compiler supports double as a non-type template parameter  */
 
-template <int MinDegree, int MaxDegree, int DefaultDegree,
+template <int MinInput, int MaxInput, int DefaultInput,
 		  double PWMDutyMin, double PWMDutyMax>
 
 #endif /* non-type template parameter check */
-class servo {
+class pwm {
 public:
 	static_assert(
-		0 <= MinDegree,
-		"the minimum degree cannot be negative!"
+		0 <= MinInput,
+		"the minimum input cannot be negative!"
 	);
 	static_assert(
-		MaxDegree <= 360,
-		"the maximum degree cannot be greater than 360 degrees!"
+		MinInput <= MaxInput,
+		"the minimum input cannot be greater than the maximum value!"
 	);
 	static_assert(
-		MinDegree <= DefaultDegree && DefaultDegree <= MaxDegree,
-		"the default degree must be in the range between the minimum and the maximum degrees!"
+		MinInput <= DefaultInput && DefaultInput <= MaxInput,
+		"the default input must be in the range between the minimum and the maximum inputs!"
 	);
 	static_assert(
 		0 <= PWMDutyMin,
@@ -114,66 +113,84 @@ public:
 		"the maximum pwm duty cycle percentage cannot be greater than 100!"
 	);
 
-	servo(TIM_HandleTypeDef& timer, std::uint32_t channel) noexcept
-	: m_timer{&timer},
-	  m_channel{channel},
-	  m_pwm_resolution{m_timer->Init.Period + 1}
+	pwm(TIM_HandleTypeDef& timer_handle, std::uint32_t timer_channel) noexcept
+	: m_timer_handle{&timer_handle},
+	  m_timer_channel{timer_channel},
+	  m_pwm_resolution{m_timer_handle->Init.Period + 1}
 	{
-		HAL_TIM_PWM_Start(m_timer, m_channel);
-		set_position(DefaultDegree);
+		HAL_TIM_PWM_Start(m_timer_handle, m_timer_channel);
+		set(DefaultInput);
 	}
 
-	servo(const servo&) = delete;
-	servo& operator=(const servo&) = delete;
-	servo(servo&&) = delete;
-	servo& operator=(servo&&) = delete;
+	pwm(const pwm&) = delete;
+	pwm& operator=(const pwm&) = delete;
+	pwm(pwm&&) = delete;
+	pwm& operator=(pwm&&) = delete;
 
-	~servo()
+	[[nodiscard]]
+	TIM_HandleTypeDef* get_timer_handle() const noexcept
 	{
-		HAL_TIM_PWM_Stop(m_timer, m_channel);
-	}
-
-	void set_position(double degree) noexcept
-	{
-		if (degree <= MinDegree){
-			degree = MinDegree;
-		} else if (MaxDegree <= degree){
-			degree = MaxDegree;
-		}
-		__HAL_TIM_SET_COMPARE(m_timer, m_channel, convert_pwm_value(degree));
+		return m_timer_handle;
 	}
 
 	[[nodiscard]]
-	int get_position() const noexcept
+	std::uint32_t get_timer_channel() const noexcept
 	{
-		return convert_pwm_degree(__HAL_TIM_GET_COMPARE(m_timer, m_channel));
+		return m_timer_channel;
 	}
 
-private:
-	TIM_HandleTypeDef* m_timer;
-	std::uint32_t m_channel;
-	std::uint32_t m_pwm_resolution;
-	double m_pwm_value_min{
-		(m_pwm_resolution * PWMDutyMin) / 100.
-	};
-	double m_pwm_value_max{
-		(m_pwm_resolution * PWMDutyMax) / 100.
-	};
-	double m_pwm_value_resolution{
-		m_pwm_value_max - m_pwm_value_min
-	};
-
-	constexpr int convert_pwm_value(double degree) const noexcept
+	~pwm()
 	{
-		return static_cast<int>(
-			m_pwm_value_min + (degree / MaxDegree) * m_pwm_value_resolution
+		HAL_TIM_PWM_Stop(m_timer_handle, m_timer_channel);
+	}
+
+	void set(double input) noexcept
+	{
+		if (input <= MinInput){
+			input = MinInput;
+		} else if (MaxInput <= input){
+			input = MaxInput;
+		}
+		__HAL_TIM_SET_COMPARE(
+			m_timer_handle,
+			m_timer_channel,
+			convert_pwm_value(input)
 		);
 	}
 
-	constexpr int convert_pwm_degree(int pwm_value) const noexcept
+	[[nodiscard]]
+	int get() const noexcept
+	{
+		return convert_input(
+			__HAL_TIM_GET_COMPARE(m_timer_handle, m_timer_channel)
+		);
+	}
+
+private:
+	TIM_HandleTypeDef* m_timer_handle;
+	std::uint32_t m_timer_channel;
+	std::uint32_t m_pwm_resolution;
+	double m_min_pwm_value{
+		(m_pwm_resolution * PWMDutyMin) / 100.
+	};
+	double m_max_pwm_value{
+		(m_pwm_resolution * PWMDutyMax) / 100.
+	};
+	double m_pwm_value_resolution{
+		m_max_pwm_value - m_min_pwm_value
+	};
+
+	constexpr int convert_pwm_value(double input) const noexcept
+	{
+		return static_cast<int>(
+			m_min_pwm_value + (input / MaxInput) * m_pwm_value_resolution
+		);
+	}
+
+	constexpr int convert_input(int pwm_value) const noexcept
 	{
 		return static_cast<int>(std::round(
-			MaxDegree * ((pwm_value - m_pwm_value_min) / m_pwm_value_resolution)
+			MaxInput * ((pwm_value - m_min_pwm_value) / m_pwm_value_resolution)
 		));
 	}
 };
@@ -182,11 +199,13 @@ private:
   * @brief type alias for sg90 servo motors
   *
   */
-using sg90_servo = servo<0, 180, 90, 2.5, 12.>;
+using sg90_servo = pwm<0, 180, 90, 2.5, 12.>;
 
 /**
-  * Sample usage (defined in the USER CODE 2 section of the main.cpp file);
+  * Example;
+  *
   * stm32::sg90_servo vertical_servo(htim2, TIM_CHANNEL_1);
+  * vertical_servo.set(125);
   */
 
 /**
@@ -195,6 +214,14 @@ using sg90_servo = servo<0, 180, 90, 2.5, 12.>;
   * prescaler            = 27;
   * counter_period		 = 59'999;
   */
+
+/**
+  * TIM2 specs for Nucleo-F446RE at 180 MHz for the sg90_servo;
+  * peripheral_frequency = 90'000'000;
+  * prescaler            = 29;
+  * counter_period		 = 59'999;
+  */
+
 } /* namespace stm32 */
 
-#endif /* STM32_SERVO_HPP */
+#endif /* STM32_PWM_HPP */
