@@ -24,11 +24,11 @@ static_assert(__cplusplus >= 201703L, "C++17 required!");
 
 namespace stm32 {
 
+inline constexpr auto Low = GPIO_PinState::GPIO_PIN_RESET;
+inline constexpr auto High = GPIO_PinState::GPIO_PIN_SET;
+
 class gpio_base {
 public:
-	static constexpr auto Low = GPIO_PinState::GPIO_PIN_RESET;
-	static constexpr auto High = GPIO_PinState::GPIO_PIN_SET;
-
 	gpio_base(GPIO_TypeDef* gpio, std::uint16_t pin) noexcept
 	: m_gpio{gpio},
 	  m_pin{pin}
@@ -38,6 +38,18 @@ public:
 	gpio_base& operator=(const gpio_base&) = delete;
 	gpio_base(gpio_base&&) = delete;
 	gpio_base& operator=(gpio_base&&) = delete;
+
+	[[nodiscard]]
+	GPIO_TypeDef* get_gpio() const noexcept
+	{
+		return m_gpio;
+	}
+
+	[[nodiscard]]
+	std::uint16_t get_pin() const noexcept
+	{
+		return m_pin;
+	}
 
 protected:
 	GPIO_TypeDef* m_gpio;
@@ -65,7 +77,27 @@ struct gpio_output : gpio_base {
 	{
 		HAL_GPIO_WritePin(gpio_base::m_gpio, gpio_base::m_pin, state);
 	}
+
+	void toggle() noexcept
+	{
+		HAL_GPIO_TogglePin(gpio_base::m_gpio, gpio_base::m_pin);
+	}
 };
+
+#if defined(STM32F407xx)
+inline gpio_output green_led{GPIOD, GPIO_PIN_12};
+inline gpio_output orange_led{GPIOD, GPIO_PIN_13};
+inline gpio_output red_led{GPIOD, GPIO_PIN_14};
+inline gpio_output blue_led{GPIOD, GPIO_PIN_15};
+#endif /* STM32F407xx */
+
+/*
+ * Examples;
+ *
+ * stm32::gpio_output led(GPIOA, GPIO_PIN_9);
+ * led.write(stm32::High);
+ *
+ */
 
 } /* namespace stm32 */
 
