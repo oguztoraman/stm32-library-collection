@@ -1,10 +1,11 @@
 # STM32
 
-Some useful header-only C++ libraries for STM32 micro-controllers based on STM32 HAL drivers.
+Useful header-only C++ library collection for STM32 micro-controllers.
 
 ## Requirements
 
 + Modern C++ (C++17, C++20)
++ STM32 HAL drivers
 + STM32CubeIDE
 
 ## How to use these libraries on STM32CubeIDE
@@ -15,12 +16,23 @@ Some useful header-only C++ libraries for STM32 micro-controllers based on STM32
 4. Set up the C++ standard;
 ``` 
 Project => Properties => C/C++ Build => Settings => 
-MCU G++ Compiler => General => Tool Settings => 
+Tool Settings => MCU G++ Compiler => General =>
 Language Standard => ISO C++20 
 ```
-5. Copy the header file you want to use, along with its dependencies, to the Core/Inc folder.
-6. Rename the automatically generated main.c file to main.cpp.
+5. Set up the runtime library;
+``` 
+Project => Properties => C/C++ Build => Settings => 
+Tool Settings => MCU Settings => Runtime library => 
+Standard C, standard C++
+```
+6. Copy the header file you want to use, along with its dependencies, to the *Core/Inc* folder of your STM32 project.
+7. Rename the automatically generated *main.c* file to *main.cpp*.
+
+## Notes
+
++ To prevent your old code from being deleted when generating new code, write your code between the *USER CODE BEGIN* and *USER CODE END* sections.
++ Rename the *main.cpp* file to *main.c* before making any changes to the *.ioc* file and generating new code. After generating new code, rename the automatically generated *main.c* file to *main.cpp*.
 
 ## License
 
-BSD 3-Clause License.
+BSD 3-Clause License, see LICENSE file for details.
