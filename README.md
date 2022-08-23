@@ -47,3 +47,6 @@ BSD 3-Clause License, see LICENSE file for details.
 + [ ] 7-Segment Display
 + [ ] LCD
 + [ ] Multi-mode gpio
++ [ ] DS18B20
++ [ ] LM35
++ [ ] ADXL345
