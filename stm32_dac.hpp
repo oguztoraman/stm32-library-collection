@@ -24,7 +24,7 @@ static_assert(__cplusplus >= 201703L, "C++17 required!");
 
 namespace stm32 {
 
-template <int MinOutput = 0, int MaxOutput = 100,
+template <std::uint32_t MinOutput = 0, std::uint32_t MaxOutput = 100,
 		unsigned int DacAlignment = DAC_ALIGN_12B_R>
 class dac {
 public:
@@ -35,10 +35,6 @@ public:
 	  m_dac_channel{dac_channel},
 	  m_dac_resolution{dac_resolution}
 	{
-		static_assert(
-			0 <= MinOutput,
-			"the minimum output cannot be negative!"
-		);
 		static_assert(
 			MinOutput <= MaxOutput,
 			"the minimum output cannot be greater than the maximum output!"

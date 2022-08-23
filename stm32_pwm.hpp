@@ -81,21 +81,17 @@ struct stm32_double {
   * 	  after all the initializing operations,
   * 	  for example, in the USER CODE 2 section.
   */
-template <int MinInput, int MaxInput, int DefaultInput,
+template <std::uint32_t MinInput, std::uint32_t MaxInput, std::uint32_t DefaultInput,
 		  stm32_double MinPWMDuty, stm32_double MaxPWMDuty>
 #else
 /* the compiler supports double as a non-type template parameter  */
 
-template <int MinInput, int MaxInput, int DefaultInput,
+template <std::uint32_t MinInput, std::uint32_t MaxInput, std::uint32_t DefaultInput,
 		  double MinPWMDuty, double MaxPWMDuty>
 
 #endif /* non-type template parameter check */
 class pwm {
 public:
-	static_assert(
-		0 <= MinInput,
-		"the minimum input cannot be negative!"
-	);
 	static_assert(
 		MinInput <= MaxInput,
 		"the minimum input cannot be greater than the maximum input!"
@@ -145,7 +141,7 @@ public:
 	}
 
 	[[nodiscard]]
-	int get() const noexcept
+	std::uint32_t get() const noexcept
 	{
 		return convert_to_input(
 			__HAL_TIM_GET_COMPARE(m_timer_handle, m_timer_channel)
@@ -183,15 +179,15 @@ private:
 	constexpr int convert_to_pwm(double input) const noexcept
 	{
 		return static_cast<int>(
-			m_min_pwm_value + (input / MaxInput) * m_pwm_value_resolution
+			m_min_pwm_value + (input / (MaxInput - MinInput)) * m_pwm_value_resolution
 		);
 	}
 
-	constexpr int convert_to_input(int pwm_value) const noexcept
+	constexpr auto convert_to_input(int pwm_value) const noexcept
 	{
-		return static_cast<int>(std::round(
-			MaxInput * ((pwm_value - m_min_pwm_value) / m_pwm_value_resolution)
-		));
+		return static_cast<std::uint32_t>(std::round(
+			(MaxInput - MinInput) * ((pwm_value - m_min_pwm_value) / m_pwm_value_resolution)) + MinInput
+		);
 	}
 };
 

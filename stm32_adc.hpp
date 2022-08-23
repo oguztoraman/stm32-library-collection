@@ -27,7 +27,7 @@ static_assert(__cplusplus >= 201703L, "C++17 required!");
 
 namespace stm32 {
 
-template <int MinInput = 0, int MaxInput = 100,
+template <std::uint32_t MinInput = 0, std::uint32_t MaxInput = 100,
 		std::uint32_t MedianFilterSize = 1,std::uint32_t TimeoutMs = 5'000>
 class adc {
 public:
@@ -36,10 +36,6 @@ public:
 	: m_adc_handle{&adc_handle},
 	  m_adc_resolution{adc_resolution}
 	{
-		static_assert(
-			0 <= MinInput,
-			"the minimum input cannot be negative!"
-		);
 		static_assert(
 			MinInput <= MaxInput,
 			"the minimum input cannot be greater than the maximum input!"
