@@ -84,12 +84,16 @@ struct gpio_output : gpio_base {
 	}
 };
 
-#if defined(STM32F407xx)
-inline gpio_output green_led{GPIOD, GPIO_PIN_12};
-inline gpio_output orange_led{GPIOD, GPIO_PIN_13};
-inline gpio_output red_led{GPIOD, GPIO_PIN_14};
-inline gpio_output blue_led{GPIOD, GPIO_PIN_15};
-#endif /* STM32F407xx */
+#if defined(STM32F4DISCOVERY)
+inline gpio_output green_user_led{GPIOD, GPIO_PIN_12};
+inline gpio_output orange_user_led{GPIOD, GPIO_PIN_13};
+inline gpio_output red_user_led{GPIOD, GPIO_PIN_14};
+inline gpio_output blue_user_led{GPIOD, GPIO_PIN_15};
+#endif /* STM32F4DISCOVERY */
+
+#if defined(NUCLEO_F446RE)
+inline gpio_output green_user_led{GPIOA, GPIO_PIN_5};
+#endif /* NUCLEO_F446RE */
 
 /*
  * Examples;
