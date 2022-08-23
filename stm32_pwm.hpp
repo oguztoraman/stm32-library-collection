@@ -82,12 +82,12 @@ struct stm32_double {
   * 	  for example, in the USER CODE 2 section.
   */
 template <int MinInput, int MaxInput, int DefaultInput,
-		  stm32_double PWMDutyMin, stm32_double PWMDutyMax>
+		  stm32_double MinPWMDuty, stm32_double MaxPWMDuty>
 #else
 /* the compiler supports double as a non-type template parameter  */
 
 template <int MinInput, int MaxInput, int DefaultInput,
-		  double PWMDutyMin, double PWMDutyMax>
+		  double MinPWMDuty, double MaxPWMDuty>
 
 #endif /* non-type template parameter check */
 class pwm {
@@ -105,11 +105,11 @@ public:
 		"the default input must be in the range between the minimum and the maximum inputs!"
 	);
 	static_assert(
-		0 <= PWMDutyMin,
+		0 <= MinPWMDuty,
 		"the minimum pwm duty cycle percentage cannot be negative!"
 	);
 	static_assert(
-		PWMDutyMax <= 100,
+		MaxPWMDuty <= 100,
 		"the maximum pwm duty cycle percentage cannot be greater than 100!"
 	);
 
@@ -171,10 +171,10 @@ private:
 	std::uint32_t m_timer_channel;
 	std::uint32_t m_pwm_resolution;
 	double m_min_pwm_value{
-		(m_pwm_resolution * PWMDutyMin) / 100.
+		(m_pwm_resolution * MinPWMDuty) / 100.
 	};
 	double m_max_pwm_value{
-		(m_pwm_resolution * PWMDutyMax) / 100.
+		(m_pwm_resolution * MaxPWMDuty) / 100.
 	};
 	double m_pwm_value_resolution{
 		m_max_pwm_value - m_min_pwm_value

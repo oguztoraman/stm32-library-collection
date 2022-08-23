@@ -27,7 +27,8 @@ static_assert(__cplusplus >= 201703L, "C++17 required!");
 
 namespace stm32 {
 
-template <int MinOutput = 0, int MaxOutput = 100, std::uint32_t MedianFilterSize = 1>
+template <int MinInput = 0, int MaxInput = 100,
+		std::uint32_t MedianFilterSize = 1>
 class adc {
 public:
 	adc(ADC_HandleTypeDef& adc_handle,
@@ -38,12 +39,12 @@ public:
 	  m_adc_resolution{adc_resolution}
 	{
 		static_assert(
-			0 <= MinOutput,
-			"the minimum output cannot be negative!"
+			0 <= MinInput,
+			"the minimum input cannot be negative!"
 		);
 		static_assert(
-			MinOutput <= MaxOutput,
-			"the minimum output cannot be greater than the maximum output!"
+			MinInput <= MaxInput,
+			"the minimum input cannot be greater than the maximum input!"
 		);
 		static_assert(
 			1 <= MedianFilterSize,
@@ -76,8 +77,8 @@ public:
 			std::uint32_t input = HAL_ADC_GetValue(m_adc_handle);
 			HAL_ADC_Stop(m_adc_handle);
 			adc_values[i] = std::round(
-				(input / m_adc_resolution) * (MaxOutput - MinOutput)
-			) + MinOutput;
+				(input / m_adc_resolution) * (MaxInput - MinInput)
+			) + MinInput;
 		}
 		std::sort(std::begin(adc_values), std::end(adc_values));
 		return adc_values[MedianFilterSize/2];
