@@ -107,6 +107,8 @@ private:
 template <std::uint32_t TransmitTimeout = 100>
 using hc05 = uart<TransmitTimeout>;
 
+template <std::uint32_t TransmitTimeout = 100>
+using hc06 = uart<TransmitTimeout>;
 /**
   * Example;
   *
