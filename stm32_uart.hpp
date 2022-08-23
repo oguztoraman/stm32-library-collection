@@ -105,7 +105,7 @@ private:
 };
 
 template <std::uint32_t TransmitTimeout = 100>
-using hc05_bluetooth_module = uart<TransmitTimeout>;
+using hc05 = uart<TransmitTimeout>;
 
 /**
   * Example;

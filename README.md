@@ -36,3 +36,14 @@ Standard C, standard C++
 ## License
 
 BSD 3-Clause License, see LICENSE file for details.
+
+### To Do
+ 
++ [ ] I2C
++ [ ] MPU6050
++ [ ] SPI
++ [ ] I2S
++ [ ] CANBUS
++ [ ] 7-Segment Display
++ [ ] LCD
++ [ ] Multi-mode gpio
