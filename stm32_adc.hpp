@@ -28,14 +28,12 @@ static_assert(__cplusplus >= 201703L, "C++17 required!");
 namespace stm32 {
 
 template <int MinInput = 0, int MaxInput = 100,
-		std::uint32_t MedianFilterSize = 1>
+		std::uint32_t MedianFilterSize = 1,std::uint32_t MsTimeout = 5'000>
 class adc {
 public:
 	adc(ADC_HandleTypeDef& adc_handle,
-		std::uint32_t adc_timeout_ms = 5000,
 		double adc_resolution = 4095.) noexcept
 	: m_adc_handle{&adc_handle},
-	  m_adc_timeout_ms{adc_timeout_ms},
 	  m_adc_resolution{adc_resolution}
 	{
 		static_assert(
@@ -73,7 +71,7 @@ public:
 		static std::array<double, MedianFilterSize> adc_values{};
 		for (std::uint32_t i{}; i < MedianFilterSize; ++i){
 			HAL_ADC_Start(m_adc_handle);
-			HAL_ADC_PollForConversion(m_adc_handle , m_adc_timeout_ms);
+			HAL_ADC_PollForConversion(m_adc_handle , MsTimeout);
 			std::uint32_t input = HAL_ADC_GetValue(m_adc_handle);
 			HAL_ADC_Stop(m_adc_handle);
 			adc_values[i] = std::round(
@@ -86,7 +84,6 @@ public:
 
 private:
 	ADC_HandleTypeDef* m_adc_handle;
-	std::uint32_t m_adc_timeout_ms;
 	double m_adc_resolution;
 };
 
