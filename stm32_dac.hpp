@@ -95,13 +95,20 @@ private:
 	std::uint32_t m_dac_channel;
 	double m_dac_resolution;
 
-	static constexpr int convert_to_dac(double output) noexcept
+	constexpr int convert_to_dac(double output) const noexcept
 	{
 		return static_cast<int>(
 			(output / (MaxOutput - MinOutput)) * m_dac_resolution
 		);
 	}
 };
+
+/**
+  * Example;
+  *
+  * stm32::dac led(hdac, DAC_CHANNEL_1);
+  * led.set(100);
+  */
 
 } /* namespace stm32 */
 
