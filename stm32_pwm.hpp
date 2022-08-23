@@ -98,7 +98,7 @@ public:
 	);
 	static_assert(
 		MinInput <= MaxInput,
-		"the minimum input cannot be greater than the maximum value!"
+		"the minimum input cannot be greater than the maximum input!"
 	);
 	static_assert(
 		MinInput <= DefaultInput && DefaultInput <= MaxInput,
@@ -127,6 +127,11 @@ public:
 	pwm(pwm&&) = delete;
 	pwm& operator=(pwm&&) = delete;
 
+	~pwm()
+	{
+		HAL_TIM_PWM_Stop(m_timer_handle, m_timer_channel);
+	}
+
 	[[nodiscard]]
 	TIM_HandleTypeDef* get_timer_handle() const noexcept
 	{
@@ -137,11 +142,6 @@ public:
 	std::uint32_t get_timer_channel() const noexcept
 	{
 		return m_timer_channel;
-	}
-
-	~pwm()
-	{
-		HAL_TIM_PWM_Stop(m_timer_handle, m_timer_channel);
 	}
 
 	void set(double input) noexcept
