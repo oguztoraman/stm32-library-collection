@@ -147,7 +147,7 @@ public:
 	[[nodiscard]]
 	int get() const noexcept
 	{
-		return convert_input(
+		return convert_to_input(
 			__HAL_TIM_GET_COMPARE(m_timer_handle, m_timer_channel)
 		);
 	}
@@ -162,7 +162,7 @@ public:
 		__HAL_TIM_SET_COMPARE(
 			m_timer_handle,
 			m_timer_channel,
-			convert_pwm_value(input)
+			convert_to_pwm(input)
 		);
 	}
 
@@ -180,14 +180,14 @@ private:
 		m_max_pwm_value - m_min_pwm_value
 	};
 
-	constexpr int convert_pwm_value(double input) const noexcept
+	constexpr int convert_to_pwm(double input) const noexcept
 	{
 		return static_cast<int>(
 			m_min_pwm_value + (input / MaxInput) * m_pwm_value_resolution
 		);
 	}
 
-	constexpr int convert_input(int pwm_value) const noexcept
+	constexpr int convert_to_input(int pwm_value) const noexcept
 	{
 		return static_cast<int>(std::round(
 			MaxInput * ((pwm_value - m_min_pwm_value) / m_pwm_value_resolution)

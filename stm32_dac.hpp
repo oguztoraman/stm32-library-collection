@@ -86,7 +86,7 @@ public:
 			m_dac_handle,
 			m_dac_channel,
 			DacAlignment,
-			convert_dac(output)
+			convert_to_dac(output)
 		);
 	}
 
@@ -95,7 +95,7 @@ private:
 	std::uint32_t m_dac_channel;
 	double m_dac_resolution;
 
-	static constexpr int convert_dac(double output) noexcept
+	static constexpr int convert_to_dac(double output) noexcept
 	{
 		return static_cast<int>(
 			(output / (MaxOutput - MinOutput)) * m_dac_resolution
