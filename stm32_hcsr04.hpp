@@ -1,5 +1,5 @@
 /*
- * stm32_hcsr04_ultrasonic_sensor.hpp
+ * stm32_hcsr04.hpp
  *
  * Copyright (c) 2022 Oğuz Toraman oguz.toraman@protonmail.com
  * All rights reserved.
@@ -10,17 +10,17 @@
  *
  */
 
-#ifndef STM32_HCSR04_ULTRASONIC_SENSOR_HPP
-#define STM32_HCSR04_ULTRASONIC_SENSOR_HPP
+#ifndef STM32_HCSR04_HPP
+#define STM32_HCSR04_HPP
 
 #include <stm32_gpio.hpp>
 #include <stm32_timer.hpp>
 
 namespace stm32 {
 
-class hcsr04_ultrasonic_sensor {
+class hcsr04 {
 public:
-	hcsr04_ultrasonic_sensor(
+	hcsr04(
 		timer& us_timer,
 		gpio_input& input_pin,
 		gpio_output& output_pin) noexcept
@@ -29,10 +29,10 @@ public:
 	  m_output_pin{&output_pin}
 	{ }
 
-	hcsr04_ultrasonic_sensor(const hcsr04_ultrasonic_sensor&) = delete;
-	hcsr04_ultrasonic_sensor& operator=(const hcsr04_ultrasonic_sensor&) = delete;
-	hcsr04_ultrasonic_sensor(hcsr04_ultrasonic_sensor&&) = delete;
-	hcsr04_ultrasonic_sensor& operator=(hcsr04_ultrasonic_sensor&&) = delete;
+	hcsr04(const hcsr04&) = delete;
+	hcsr04& operator=(const hcsr04&) = delete;
+	hcsr04(hcsr04&&) = delete;
+	hcsr04& operator=(hcsr04&&) = delete;
 
 	[[nodiscard]]
 	int get_distance() const noexcept
@@ -71,4 +71,4 @@ private:
 
 } /* namespace stm32 */
 
-#endif /* STM32_HCSR04_ULTRASONIC_SENSOR_HPP */
+#endif /* STM32_HCSR04_HPP */
