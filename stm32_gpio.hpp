@@ -73,14 +73,14 @@ struct gpio_output : gpio_base {
 	: gpio_base(gpio, pin)
 	{ }
 
-	void write(GPIO_PinState state) noexcept
-	{
-		HAL_GPIO_WritePin(gpio_base::m_gpio, gpio_base::m_pin, state);
-	}
-
 	void toggle() noexcept
 	{
 		HAL_GPIO_TogglePin(gpio_base::m_gpio, gpio_base::m_pin);
+	}
+
+	void write(GPIO_PinState state) noexcept
+	{
+		HAL_GPIO_WritePin(gpio_base::m_gpio, gpio_base::m_pin, state);
 	}
 };
 
@@ -96,7 +96,6 @@ inline gpio_output blue_led{GPIOD, GPIO_PIN_15};
  *
  * stm32::gpio_output led(GPIOA, GPIO_PIN_9);
  * led.write(stm32::High);
- *
  */
 
 } /* namespace stm32 */

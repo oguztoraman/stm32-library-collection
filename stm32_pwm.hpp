@@ -144,6 +144,14 @@ public:
 		return m_timer_channel;
 	}
 
+	[[nodiscard]]
+	int get() const noexcept
+	{
+		return convert_input(
+			__HAL_TIM_GET_COMPARE(m_timer_handle, m_timer_channel)
+		);
+	}
+
 	void set(double input) noexcept
 	{
 		if (input <= MinInput){
@@ -155,14 +163,6 @@ public:
 			m_timer_handle,
 			m_timer_channel,
 			convert_pwm_value(input)
-		);
-	}
-
-	[[nodiscard]]
-	int get() const noexcept
-	{
-		return convert_input(
-			__HAL_TIM_GET_COMPARE(m_timer_handle, m_timer_channel)
 		);
 	}
 
@@ -216,7 +216,7 @@ using sg90_servo = pwm<0, 180, 90, 2.5, 12.>;
   */
 
 /**
-  * TIM2 specs for Nucleo-F446RE at 180 MHz for the sg90_servo;
+  * TIM2 specs for NUCLEO-F446RE at 180 MHz for the sg90_servo;
   * peripheral_frequency = 90'000'000;
   * prescaler            = 29;
   * counter_period		 = 59'999;
