@@ -89,10 +89,12 @@ inline gpio_output green_user_led{GPIOD, GPIO_PIN_12};
 inline gpio_output orange_user_led{GPIOD, GPIO_PIN_13};
 inline gpio_output red_user_led{GPIOD, GPIO_PIN_14};
 inline gpio_output blue_user_led{GPIOD, GPIO_PIN_15};
+inline gpio_input user_button{GPIOA, GPIO_PIN_0};
 #endif /* STM32F4DISCOVERY */
 
 #if defined(NUCLEO_F446RE)
 inline gpio_output green_user_led{GPIOA, GPIO_PIN_5};
+inline gpio_input user_button{GPIOC, GPIO_PIN_13};
 #endif /* NUCLEO_F446RE */
 
 /*

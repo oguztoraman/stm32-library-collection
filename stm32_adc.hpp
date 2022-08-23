@@ -28,7 +28,7 @@ static_assert(__cplusplus >= 201703L, "C++17 required!");
 namespace stm32 {
 
 template <int MinInput = 0, int MaxInput = 100,
-		std::uint32_t MedianFilterSize = 1,std::uint32_t MsTimeout = 5'000>
+		std::uint32_t MedianFilterSize = 1,std::uint32_t TimeoutMs = 5'000>
 class adc {
 public:
 	adc(ADC_HandleTypeDef& adc_handle,
@@ -71,7 +71,7 @@ public:
 		static std::array<double, MedianFilterSize> adc_values{};
 		for (std::uint32_t i{}; i < MedianFilterSize; ++i){
 			HAL_ADC_Start(m_adc_handle);
-			HAL_ADC_PollForConversion(m_adc_handle , MsTimeout);
+			HAL_ADC_PollForConversion(m_adc_handle , TimeoutMs);
 			std::uint32_t input = HAL_ADC_GetValue(m_adc_handle);
 			HAL_ADC_Stop(m_adc_handle);
 			adc_values[i] = std::round(
@@ -79,7 +79,8 @@ public:
 			) + MinInput;
 		}
 		std::sort(std::begin(adc_values), std::end(adc_values));
-		return adc_values[MedianFilterSize/2];
+		auto value = adc_values[MedianFilterSize/2];
+		return MaxInput <=  value ? MaxInput : value;
 	}
 
 private:
