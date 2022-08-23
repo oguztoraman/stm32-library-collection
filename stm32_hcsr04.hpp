@@ -35,7 +35,7 @@ public:
 	hcsr04& operator=(hcsr04&&) = delete;
 
 	[[nodiscard]]
-	int get_distance() const noexcept
+	std::uint32_t get_distance() const noexcept
 	{
 		m_output_pin->write(High);
 		m_us_timer->sleep_for(initial_delay);
@@ -52,7 +52,9 @@ public:
 				return max_distance;
 			}
 		}
-		int distance = static_cast<int>(m_us_timer->get() / coefficient);
+		auto distance = static_cast<std::uint32_t>(
+			m_us_timer->get() / coefficient
+		);
 		m_us_timer->sleep_for(new_measurement_delay);
 		return distance;
 	}
