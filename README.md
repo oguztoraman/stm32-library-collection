@@ -50,4 +50,5 @@ BSD 3-Clause License, see LICENSE file for details.
 + [ ] DS18B20
 + [ ] LM35
 + [ ] ADXL345
++ [ ] PID control
 + [ ] Use double as a non-type template parameter when supported by the compiler
