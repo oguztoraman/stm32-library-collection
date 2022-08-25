@@ -179,14 +179,14 @@ private:
 	constexpr int convert_to_pwm(double input) const noexcept
 	{
 		return static_cast<int>(
-			m_min_pwm_value + (input / (MaxInput - MinInput)) * m_pwm_value_resolution
+			m_min_pwm_value+((input - MinInput)/(MaxInput - MinInput))*m_pwm_value_resolution
 		);
 	}
 
 	constexpr auto convert_to_input(int pwm_value) const noexcept
 	{
 		return static_cast<std::uint32_t>(std::round(
-			(MaxInput - MinInput) * ((pwm_value - m_min_pwm_value) / m_pwm_value_resolution)) + MinInput
+			(MaxInput - MinInput)*((pwm_value - m_min_pwm_value)/m_pwm_value_resolution))+MinInput
 		);
 	}
 };
