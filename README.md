@@ -1,6 +1,6 @@
-# STM32
+# STM32 Library Collection
 
-Useful header-only C++ library collection for STM32 micro-controllers.
+Useful, header-only C++ library collection for STM32 micro-controllers.
 
 ## Requirements
 
