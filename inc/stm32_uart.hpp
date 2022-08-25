@@ -60,26 +60,20 @@ public:
 	template <std::size_t MessageLength>
 	bool receive_to_dma(
 		std::array<char, MessageLength>& rx_message,
-		std::uint16_t size
+		std::size_t size = MessageLength
 	) noexcept
 	{
 		return (HAL_OK == HAL_UART_Receive_DMA(
 			m_uart_handle,
 			reinterpret_cast<std::uint8_t*>(rx_message.data()),
-			size
+			static_cast<std::uint16_t>(size)
 		));
-	}
-
-	template <std::size_t MessageLength>
-	bool receive_to_dma(std::array<char, MessageLength>& rx_message) noexcept
-	{
-		return receive_to_dma(rx_message, static_cast<std::uint16_t>(MessageLength));
 	}
 
 	template <std::size_t MessageLength>
 	bool transmit(
 		const std::array<char, MessageLength>& tx_message,
-		std::uint16_t size
+		std::size_t size = MessageLength
 	) noexcept
 	{
 		return (HAL_OK == HAL_UART_Transmit(
@@ -89,15 +83,9 @@ public:
 					tx_message.data()
 				)
 			),
-			size,
+			static_cast<std::uint16_t>(size),
 			TransmitTimeout
 		));
-	}
-
-	template <std::size_t MessageLength>
-	bool transmit(const std::array<char, MessageLength>& tx_message) noexcept
-	{
-		return transmit(tx_message, static_cast<std::uint16_t>(MessageLength));
 	}
 
 private:
