@@ -210,27 +210,27 @@ private:
 };
 
 /**
-  * @brief type alias for sg90 servo motors
+  * @brief type alias for servo motors
   *
   */
-using sg90_servo = pwm<0, 180, 0, 180, 90, 2.5, 12.>;
+using servo = pwm<0, 180, 0, 180, 90, 2.5, 12.>;
 
 /**
   * Example;
   *
-  * stm32::sg90_servo vertical_servo(htim2, TIM_CHANNEL_1);
+  * stm32::servo vertical_servo(htim2, TIM_CHANNEL_1);
   * vertical_servo.set(125);
   */
 
 /**
-  * TIM2 specs for STM32F4-DISC at 168 MHz for the sg90_servo;
+  * TIM2 specs for STM32F4-DISC at 168 MHz for servo motors;
   * peripheral_frequency = 84'000'000;
   * prescaler            = 27;
   * counter_period		 = 59'999;
   */
 
 /**
-  * TIM2 specs for NUCLEO-F446RE at 180 MHz for the sg90_servo;
+  * TIM2 specs for NUCLEO-F446RE at 180 MHz for servo motors;
   * peripheral_frequency = 90'000'000;
   * prescaler            = 29;
   * counter_period		 = 59'999;
