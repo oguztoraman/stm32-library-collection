@@ -81,17 +81,31 @@ struct stm32_double {
   * 	  after all the initializing operations,
   * 	  for example, in the USER CODE 2 section.
   */
-template <std::uint32_t MinInput, std::uint32_t MaxInput, std::uint32_t DefaultInput,
+template <std::uint32_t InputRangeBegin, std::uint32_t InputRangeEnd,
+		  std::uint32_t MinInput, std::uint32_t MaxInput, std::uint32_t DefaultInput,
 		  stm32_double MinPWMDuty, stm32_double MaxPWMDuty>
 #else
 /* the compiler supports double as a non-type template parameter  */
 
-template <std::uint32_t MinInput, std::uint32_t MaxInput, std::uint32_t DefaultInput,
+template <std::uint32_t InputRangeBegin, std::uint32_t InputRangeEnd,
+		  std::uint32_t MinInput, std::uint32_t MaxInput, std::uint32_t DefaultInput,
 		  double MinPWMDuty, double MaxPWMDuty>
 
 #endif /* non-type template parameter check */
 class pwm {
 public:
+	static_assert(
+		InputRangeBegin <= MinInput,
+		"the minimum input cannot be less than the input range begin!"
+	);
+	static_assert(
+		MaxInput <= InputRangeEnd,
+		"the maximum input cannot be greater than the input range end!"
+	);
+	static_assert(
+		InputRangeBegin <= InputRangeEnd,
+		"the input range begin cannot be greater than the input range end!"
+	);
 	static_assert(
 		MinInput <= MaxInput,
 		"the minimum input cannot be greater than the maximum input!"
@@ -179,14 +193,18 @@ private:
 	constexpr int convert_to_pwm(double input) const noexcept
 	{
 		return static_cast<int>(
-			m_min_pwm_value+((input - MinInput)/(MaxInput - MinInput))*m_pwm_value_resolution
+			m_min_pwm_value +
+			((input - InputRangeBegin) / (InputRangeEnd - InputRangeBegin)) *
+			m_pwm_value_resolution
 		);
 	}
 
 	constexpr auto convert_to_input(int pwm_value) const noexcept
 	{
 		return static_cast<std::uint32_t>(std::round(
-			(MaxInput - MinInput)*((pwm_value - m_min_pwm_value)/m_pwm_value_resolution))+MinInput
+			(InputRangeEnd - InputRangeBegin) *
+			((pwm_value - m_min_pwm_value) / m_pwm_value_resolution)) +
+			InputRangeBegin
 		);
 	}
 };
@@ -195,7 +213,7 @@ private:
   * @brief type alias for sg90 servo motors
   *
   */
-using sg90_servo = pwm<0, 180, 90, 2.5, 12.>;
+using sg90_servo = pwm<0, 180, 0, 180, 90, 2.5, 12.>;
 
 /**
   * Example;
