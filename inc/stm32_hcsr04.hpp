@@ -16,6 +16,15 @@
 #include <stm32_gpio.hpp>
 #include <stm32_timer.hpp>
 
+#if !defined(HCSR04_OUTPUT_VOLTAGE_REDUCED)
+static_assert(false,
+	"the output voltage of the sensor is 5V! "
+	"reduce the output voltage by using voltage divider or "
+	"use a 5V tolerant pin as an input pin. "
+	"define HCSR04_OUTPUT_VOLTAGE_REDUCED to skip this error."
+);
+#endif
+
 namespace stm32 {
 
 class hcsr04 {
