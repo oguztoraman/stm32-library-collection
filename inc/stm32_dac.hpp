@@ -14,6 +14,7 @@
 #define STM32_DAC_HPP
 
 #include <cstdint>
+#include <algorithm>
 #include <stm32f4xx_hal.h>
 
 #if !defined(HAL_DAC_MODULE_ENABLED) /* module check */
@@ -73,11 +74,11 @@ public:
 
 	void set(double output) noexcept
 	{
-		if (output <= MinOutput){
-			output = MinOutput;
-		} else if (MaxOutput <= output){
-			output = MaxOutput;
-		}
+		output = std::clamp(
+			output,
+			static_cast<double>(MinOutput),
+			static_cast<double>(MaxOutput)
+		);
 		HAL_DAC_SetValue(
 			m_dac_handle,
 			m_dac_channel,

@@ -15,6 +15,7 @@
 
 #include <cmath>
 #include <cstdint>
+#include <algorithm>
 #include <stm32f4xx_hal.h>
 #include <stm32f4xx_hal_tim.h>
 
@@ -164,11 +165,11 @@ public:
 
 	void set(double input) noexcept
 	{
-		if (input <= MinInput){
-			input = MinInput;
-		} else if (MaxInput <= input){
-			input = MaxInput;
-		}
+		input = std::clamp(
+			input,
+			static_cast<double>(MinInput),
+			static_cast<double>(MaxInput)
+		);
 		__HAL_TIM_SET_COMPARE(
 			m_timer_handle,
 			m_timer_channel,
