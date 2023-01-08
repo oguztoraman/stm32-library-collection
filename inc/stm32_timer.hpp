@@ -1,7 +1,7 @@
 /*
  * stm32_timer.hpp
  *
- * Copyright (c) 2022 Oğuz Toraman oguz.toraman@protonmail.com
+ * Copyright (c) 2022-2023 Oğuz Toraman oguz.toraman@protonmail.com
  * All rights reserved.
  *
  * This software is licensed under terms that can be found in the LICENSE file
