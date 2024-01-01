@@ -1,14 +1,5 @@
-/*
- * stm32_uart.hpp
- *
- * Copyright (c) 2022-2023 Oğuz Toraman oguz.toraman@protonmail.com
- * All rights reserved.
- *
- * This software is licensed under terms that can be found in the LICENSE file
- * in the root directory of this software component.
- * If no LICENSE file comes with this software, it is provided AS-IS.
- *
- */
+/* SPDX-FileCopyrightText: Copyright (c) 2022-2024 Oğuz Toraman <oguz.toraman@tutanota.com> */
+/* SPDX-License-Identifier: BSD-3-Clause */
 
 #ifndef STM32_UART_HPP
 #define STM32_UART_HPP
