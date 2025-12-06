@@ -35,7 +35,7 @@ Standard C, standard C++
 
 ## License
 
-BSD 3-Clause License, see LICENSE file for details.
+Licensed under the GNU LGPL version 3. See the COPYING.LESSER file for details.
 
 ### To Do
  
