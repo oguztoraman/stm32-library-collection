@@ -5,7 +5,8 @@
 #define STM32_TIMER_HPP
 
 #include <cstdint>
-#include <stm32f4xx_hal_tim.h>
+
+#include STM32_HAL_H
 
 #if !defined(HAL_TIM_MODULE_ENABLED) /* module check */
 static_assert(false, "HAL TIM module is not enabled!");
@@ -92,4 +93,4 @@ private:
 
 } /* namespace stm32 */
 
-#endif /* STM32_US_TIMER_HPP */
+#endif /* STM32_TIMER_HPP */

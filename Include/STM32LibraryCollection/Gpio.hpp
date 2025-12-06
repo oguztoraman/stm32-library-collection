@@ -5,7 +5,8 @@
 #define STM32_GPIO_HPP
 
 #include <cstdint>
-#include <stm32f4xx_hal.h>
+
+#include STM32_HAL_H
 
 #if !defined(HAL_GPIO_MODULE_ENABLED) /* module check */
 static_assert(false, "HAL GPIO module is not enabled!");

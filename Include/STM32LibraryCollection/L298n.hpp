@@ -1,11 +1,11 @@
 /* SPDX-FileCopyrightText: Copyright (c) 2022-2025 Oğuz Toraman <oguz.toraman@tutanota.com> */
 /* SPDX-License-Identifier: LGPL-3.0-only */
 
-#ifndef STM32_LINEAR_MOTOR_HPP
-#define STM32_LINEAR_MOTOR_HPP
+#ifndef STM32_L298N_HPP
+#define STM32_L298N_HPP
 
-#include <stm32_gpio.hpp>
-#include <stm32_timer.hpp>
+#include <Gpio.hpp>
+#include <Timer.hpp>
 
 namespace stm32 {
 
@@ -74,4 +74,4 @@ private:
 
 } /* namespace stm32 */
 
-#endif /* STM32_LINEAR_MOTOR_HPP */
+#endif /* STM32_L298N_HPP */

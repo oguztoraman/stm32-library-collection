@@ -4,8 +4,8 @@
 #ifndef STM32_HCSR04_HPP
 #define STM32_HCSR04_HPP
 
-#include <stm32_gpio.hpp>
-#include <stm32_timer.hpp>
+#include <Gpio.hpp>
+#include <Timer.hpp>
 
 #if !defined(HCSR04_OUTPUT_VOLTAGE_REDUCED)
 static_assert(false,

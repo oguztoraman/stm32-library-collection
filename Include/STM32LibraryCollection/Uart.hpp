@@ -6,7 +6,8 @@
 
 #include <array>
 #include <cstdint>
-#include <stm32f4xx_hal.h>
+
+#include STM32_HAL_H
 
 #if !defined(HAL_UART_MODULE_ENABLED) /* module check */
 static_assert(false, "HAL UART module is not enabled!");
