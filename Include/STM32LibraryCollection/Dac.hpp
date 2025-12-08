@@ -7,7 +7,7 @@
 #include <cstdint>
 #include <algorithm>
 
-#include STM32_HAL_H
+#include "main.h"
 
 #if !defined(HAL_DAC_MODULE_ENABLED) /* module check */
 static_assert(false, "HAL DAC module is not enabled!");

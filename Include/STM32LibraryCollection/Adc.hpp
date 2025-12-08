@@ -8,7 +8,7 @@
 #include <cmath>
 #include <algorithm>
 
-#include STM32_HAL_H
+#include "main.h"
 
 #if !defined(HAL_ADC_MODULE_ENABLED) /* module check */
 static_assert(false, "HAL ADC module is not enabled!");

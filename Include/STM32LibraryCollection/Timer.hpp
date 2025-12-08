@@ -6,7 +6,7 @@
 
 #include <cstdint>
 
-#include STM32_HAL_H
+#include "main.h"
 
 #if !defined(HAL_TIM_MODULE_ENABLED) /* module check */
 static_assert(false, "HAL TIM module is not enabled!");

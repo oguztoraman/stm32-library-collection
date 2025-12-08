@@ -65,10 +65,6 @@ Useful, header-only C++ library collection for STM32 microcontrollers.
     + Add the following lines to your top-level `CMakeLists.txt` file:
 
     ```cmake
-    set(STM32LibraryCollection_HAL_H "stm32f4xx_hal.h") # Change this according to your STM32 series.
-
-    set(STM32LibraryCollection_HAL_TIM_H "stm32f4xx_hal_tim.h") # Change this according to your STM32 series.
-
     add_subdirectory(External/STM32LibraryCollection)
 
     target_link_libraries(${CMAKE_PROJECT_NAME}

@@ -11,18 +11,6 @@ project(STM32LibraryCollection
 
 message(STATUS "STM32LibraryCollection Build type: " ${CMAKE_BUILD_TYPE})
 
-if(NOT DEFINED STM32LibraryCollection_HAL_H)
-    message(FATAL_ERROR "STM32LibraryCollection_HAL_H must be defined.")
-endif()
-
-message(STATUS "STM32LibraryCollection_HAL_H: " ${STM32LibraryCollection_HAL_H})
-
-if(NOT DEFINED STM32LibraryCollection_HAL_TIM_H)
-    message(FATAL_ERROR "STM32LibraryCollection_HAL_TIM_H must be defined.")
-endif()
-
-message(STATUS "STM32LibraryCollection_HAL_TIM_H: " ${STM32LibraryCollection_HAL_TIM_H})
-
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
 set(STM32LibraryCollection_INCLUDE_DIR
@@ -66,12 +54,6 @@ target_sources(STM32LibraryCollection
         TYPE HEADERS
         BASE_DIRS ./Include
         FILES ${STM32LibraryCollection_HEADER_FILES}
-)
-
-target_compile_definitions(STM32LibraryCollection
-    INTERFACE
-        STM32_HAL_H=<${STM32LibraryCollection_HAL_H}>
-        STM32_HAL_TIM_H=<${STM32LibraryCollection_HAL_TIM_H}>
 )
 
 install(
