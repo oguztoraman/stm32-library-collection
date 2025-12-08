@@ -15,9 +15,13 @@ if(NOT DEFINED STM32LibraryCollection_HAL_H)
     message(FATAL_ERROR "STM32LibraryCollection_HAL_H must be defined.")
 endif()
 
+message(STATUS "STM32LibraryCollection_HAL_H: " ${STM32LibraryCollection_HAL_H})
+
 if(NOT DEFINED STM32LibraryCollection_HAL_TIM_H)
     message(FATAL_ERROR "STM32LibraryCollection_HAL_TIM_H must be defined.")
 endif()
+
+message(STATUS "STM32LibraryCollection_HAL_TIM_H: " ${STM32LibraryCollection_HAL_TIM_H})
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
