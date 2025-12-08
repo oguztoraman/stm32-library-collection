@@ -70,8 +70,8 @@ target_sources(STM32LibraryCollection
 
 target_compile_definitions(STM32LibraryCollection
     INTERFACE
-        STM32_HAL_H="<${STM32LibraryCollection_HAL_H}>"
-        STM32_HAL_TIM_H="<${STM32LibraryCollection_HAL_TIM_H}>"
+        STM32_HAL_H=<${STM32LibraryCollection_HAL_H}>
+        STM32_HAL_TIM_H=<${STM32LibraryCollection_HAL_TIM_H}>
 )
 
 install(
