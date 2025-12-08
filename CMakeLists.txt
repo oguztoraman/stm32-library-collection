@@ -4,7 +4,7 @@
 cmake_minimum_required(VERSION 3.20)
 
 project(STM32LibraryCollection
-    VERSION 0.1.0
+    VERSION 1.0.0
     DESCRIPTION "Useful, header-only C++ library collection for STM32 microcontrollers."
     LANGUAGES CXX
 )
