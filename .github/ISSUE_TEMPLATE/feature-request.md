@@ -11,7 +11,7 @@ labels: enhancement
 
 ## Version Information
 
-**STM32 Compiler Collection Version**: ...
+**STM32 Library Collection Version**: ...
 
 ## Description
 
