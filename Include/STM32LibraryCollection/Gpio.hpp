@@ -4,98 +4,269 @@
 #ifndef STM32_GPIO_HPP
 #define STM32_GPIO_HPP
 
+#include <concepts>
 #include <cstdint>
+#include <utility>
 
 #include "main.h"
 
 #if !defined(HAL_GPIO_MODULE_ENABLED) /* module check */
-static_assert(false, "HAL GPIO module is not enabled!");
+#error "HAL GPIO module is not enabled!"
 #endif /* module check */
 
-static_assert(__cplusplus >= 201703L, "C++17 required!");
+namespace STM32 {
 
-namespace stm32 {
-
-inline constexpr auto Low = GPIO_PinState::GPIO_PIN_RESET;
-inline constexpr auto High = GPIO_PinState::GPIO_PIN_SET;
-
-class gpio_base {
-public:
-	gpio_base(GPIO_TypeDef* gpio, std::uint16_t pin) noexcept
-	: m_gpio{gpio},
-	  m_pin{pin}
-	{ }
-
-	gpio_base(const gpio_base&) = delete;
-	gpio_base& operator=(const gpio_base&) = delete;
-	gpio_base(gpio_base&&) = delete;
-	gpio_base& operator=(gpio_base&&) = delete;
-
-	[[nodiscard]]
-	GPIO_TypeDef* get_gpio() const noexcept
-	{
-		return m_gpio;
-	}
-
-	[[nodiscard]]
-	std::uint16_t get_pin() const noexcept
-	{
-		return m_pin;
-	}
-
-protected:
-	GPIO_TypeDef* m_gpio;
-	std::uint16_t m_pin;
-};
-
-struct gpio_input : gpio_base {
-	gpio_input(GPIO_TypeDef* gpio, std::uint16_t pin) noexcept
-	: gpio_base(gpio, pin)
-	{ }
-
-	[[nodiscard]]
-	GPIO_PinState read() const noexcept
-	{
-		return HAL_GPIO_ReadPin(gpio_base::m_gpio, gpio_base::m_pin);
-	}
-};
-
-struct gpio_output : gpio_base {
-	gpio_output(GPIO_TypeDef* gpio, std::uint16_t pin) noexcept
-	: gpio_base(gpio, pin)
-	{ }
-
-	void toggle() noexcept
-	{
-		HAL_GPIO_TogglePin(gpio_base::m_gpio, gpio_base::m_pin);
-	}
-
-	void write(GPIO_PinState state) noexcept
-	{
-		HAL_GPIO_WritePin(gpio_base::m_gpio, gpio_base::m_pin, state);
-	}
-};
-
-#if defined(STM32F4DISCOVERY)
-inline gpio_output green_user_led{GPIOD, GPIO_PIN_12};
-inline gpio_output orange_user_led{GPIOD, GPIO_PIN_13};
-inline gpio_output red_user_led{GPIOD, GPIO_PIN_14};
-inline gpio_output blue_user_led{GPIOD, GPIO_PIN_15};
-inline gpio_input user_button{GPIOA, GPIO_PIN_0};
-#endif /* STM32F4DISCOVERY */
-
-#if defined(NUCLEO_F446RE)
-inline gpio_output green_user_led{GPIOA, GPIO_PIN_5};
-inline gpio_input user_button{GPIOC, GPIO_PIN_13};
-#endif /* NUCLEO_F446RE */
-
-/*
- * Examples;
- *
- * stm32::gpio_output led(GPIOA, GPIO_PIN_9);
- * led.write(stm32::High);
+/**
+ * @enum GpioPinState, States of a GPIO pin.
  */
+enum class GpioPinState {
+    Low = GPIO_PinState::GPIO_PIN_RESET,
+    High = GPIO_PinState::GPIO_PIN_SET
+};
 
-} /* namespace stm32 */
+/**
+ * @namespace GpioType, Tag types for GPIO pin direction.
+ * 
+ * These tags are used as template parameters to specify whether
+ * a GPIO pin is configured as input or output at compile time.
+ */
+namespace GpioType {
+
+/**
+ * @struct Input, Tag for input GPIO pin type.
+ * 
+ * Use this tag when creating a GPIO pin that reads external signals.
+ */
+struct Input {};
+
+/**
+ * @struct Output, Tag for output GPIO pin type.
+ * 
+ * Use this tag when creating a GPIO pin that drives external signals.
+ */
+struct Output {};
+
+} /* namespace GpioType */
+
+/**
+ * @brief IsGpioType, A concept to check if a type is a GpioType.
+ * 
+ * @tparam T        Type to be checked.
+ *
+ * @example Usage:
+ * @code {.cpp}
+ * #include <STM32LibraryCollection/Gpio.hpp>
+ * 
+ * static_assert(STM32::IsGpioType<STM32::GpioType::Input>);
+ * static_assert(!STM32::IsGpioType<int>);
+ * @endcode
+ */
+template <typename T>
+concept IsGpioType =
+    std::same_as<T, GpioType::Input> ||
+    std::same_as<T, GpioType::Output>;
+
+/**
+ * @class Gpio, General Purpose Input/Output pin abstraction.
+ * 
+ * @tparam GpioTypeT Type of the GPIO pin
+ *         (GpioType::Input or GpioType::Output).
+ *
+ * @note Gpio class is non-copyable and non-movable.
+ * @note Use the type aliases GpioInput and GpioOutput for convenience.
+ *
+ * @example Usage:
+ * @code{.cpp}
+ * #include <STM32LibraryCollection/Gpio.hpp>
+ *
+ * // Output pin example - LED control
+ * STM32::GpioOutput led{GPIOA, GPIO_PIN_5};
+ * led.High();                              // Turn LED on
+ * led.Low();                               // Turn LED off
+ * led.Toggle();                            // Toggle LED state
+ * led.Write(STM32::GpioPinState::High);    // Write specific state
+ * led = STM32::GpioPinState::Low;          // Assignment operator
+ *
+ * // Input pin example - Button reading
+ * STM32::GpioInput button{GPIOC, GPIO_PIN_13};
+ * auto state = button.Read();              // Read pin state
+ * if (button.IsHigh()) {
+ *      // pressed
+ * }
+ * if (button.IsLow()) {
+ *      // released
+ * }
+ * STM32::GpioPinState s = button;          // Implicit conversion
+ * @endcode
+ */
+template <IsGpioType GpioTypeT>
+class Gpio {
+public:
+
+    /**
+     * @brief Construct a new Gpio object.
+     * 
+     * @param handle        HAL GPIO handle.
+     * @param pin           GPIO pin number.
+     */
+    Gpio(GPIO_TypeDef* handle, std::uint16_t pin) noexcept
+        : m_handle{handle}, m_pin{pin}
+    { }
+
+    /**
+     * @defgroup Deleted copy and move members.
+     * @{
+     */
+    Gpio(const Gpio &) = delete;
+    Gpio &operator=(const Gpio &) = delete;
+    Gpio(Gpio &&) = delete;
+    Gpio &operator=(Gpio &&) = delete;
+    /** @} */
+
+    /**
+     * @returns HAL GPIO handle.
+     */
+    [[nodiscard]]
+    auto&& GetHandle(this auto&& self) noexcept
+    {
+        return std::forward<decltype(self)>(self).m_handle;
+    }
+
+    /**
+     * @returns GPIO pin number.
+     */
+    [[nodiscard]]
+    std::uint16_t GetPin() const noexcept
+    {
+        return m_pin;
+    }
+
+    /**
+     * @returns State of the GPIO pin.
+     */
+    [[nodiscard]]
+    GpioPinState Read() const noexcept
+    requires std::same_as<GpioTypeT, GpioType::Input>
+    {
+        return static_cast<GpioPinState>(
+            HAL_GPIO_ReadPin(m_handle, m_pin)
+        );
+    }
+
+    /**
+     * @brief Implicit conversion operator to GpioPinState.
+     * 
+     * Allows the GPIO input pin to be used directly in conditionals
+     * or assigned to a GpioPinState variable.
+     * 
+     * @returns State of the GPIO pin.
+     */
+    operator GpioPinState() const noexcept
+    requires std::same_as<GpioTypeT, GpioType::Input>
+    {
+        return Read();
+    }
+
+    /**
+     * @brief Toggle the GPIO pin state.
+     */
+    void Toggle() noexcept
+    requires std::same_as<GpioTypeT, GpioType::Output>
+    {
+        HAL_GPIO_TogglePin(m_handle, m_pin);
+    }
+
+    /**
+     * @brief Write the GPIO pin state.
+     * 
+     * @param pin_state     State to write to the GPIO pin.
+     */
+    void Write(GpioPinState pin_state) noexcept
+    requires std::same_as<GpioTypeT, GpioType::Output>
+    {
+        HAL_GPIO_WritePin(
+            m_handle, m_pin,
+            static_cast<GPIO_PinState>(pin_state)
+        );
+    }
+
+    /**
+     * @brief Assignment operator to write the GPIO pin state.
+     * 
+     * @param state     State to write to the GPIO pin.
+     * 
+     * @returns Reference to the current Gpio object.
+     */
+    Gpio& operator=(GpioPinState state) noexcept
+    requires std::same_as<GpioTypeT, GpioType::Output>
+    {
+        Write(state);
+        return *this;
+    }
+
+    /**
+     * @brief Set the GPIO pin to High state.
+     */
+    void High() noexcept
+    requires std::same_as<GpioTypeT, GpioType::Output>
+    {
+        Write(GpioPinState::High);
+    }
+
+    /**
+     * @brief Set the GPIO pin to Low state.
+     */
+    void Low() noexcept
+    requires std::same_as<GpioTypeT, GpioType::Output>
+    {
+        Write(GpioPinState::Low);
+    }
+
+    /**
+     * @returns True if the GPIO pin is in High state.
+     */
+    [[nodiscard]]
+    bool IsHigh() const noexcept
+    requires std::same_as<GpioTypeT, GpioType::Input>
+    {
+        return Read() == GpioPinState::High;
+    }
+
+    /**
+     * @returns True if the GPIO pin is in Low state.
+     */
+    [[nodiscard]]
+    bool IsLow() const noexcept
+    requires std::same_as<GpioTypeT, GpioType::Input>
+    {
+        return Read() == GpioPinState::Low;
+    }
+
+private:
+    GPIO_TypeDef* m_handle;
+    std::uint16_t m_pin;
+};
+
+/**
+ * @typedef GpioInput, Convenience alias for GPIO pin in input mode.
+ * 
+ * @example Usage:
+ * @code{.cpp}
+ * STM32::GpioInput button{GPIOC, GPIO_PIN_13};
+ * @endcode
+ */
+using GpioInput = Gpio<GpioType::Input>;
+
+/**
+ * @typedef GpioOutput, Convenience alias for GPIO pin in output mode.
+ * 
+ * @example Usage:
+ * @code{.cpp}
+ * STM32::GpioOutput led{GPIOA, GPIO_PIN_5};
+ * @endcode
+ */ 
+using GpioOutput = Gpio<GpioType::Output>;
+
+} /* namespace STM32 */
 
 #endif /* STM32_GPIO_HPP */

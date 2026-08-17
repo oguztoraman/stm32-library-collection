@@ -16,14 +16,14 @@ static_assert(false,
 );
 #endif
 
-namespace stm32 {
+namespace STM32 {
 
 class hcsr04 {
 public:
 	hcsr04(
-		timer& us_timer,
-		gpio_input& input_pin,
-		gpio_output& output_pin) noexcept
+		Timer& us_timer,
+		GpioInput& input_pin,
+		GpioOutput& output_pin) noexcept
 	: m_us_timer{&us_timer},
 	  m_input_pin{&input_pin},
 	  m_output_pin{&output_pin}
@@ -37,33 +37,33 @@ public:
 	[[nodiscard]]
 	std::uint16_t get_distance() const noexcept
 	{
-		m_output_pin->write(High);
-		m_us_timer->sleep_for(initial_delay);
-		m_output_pin->write(Low);
-		m_us_timer->reset();
-		while (m_input_pin->read() != High){
-			if (m_us_timer->get() >= max_counter_value){
+		m_output_pin->Write(GpioPinState::High);
+		m_us_timer->SleepFor(initial_delay);
+		m_output_pin->Write(GpioPinState::Low);
+		m_us_timer->Reset();
+		while (m_input_pin->Read() != GpioPinState::High){
+			if (m_us_timer->Get() >= max_counter_value){
 				return max_distance;
 			}
 		}
-		m_us_timer->reset();
-		while (m_input_pin->read() != Low){
-			if (m_us_timer->get() >= max_counter_value){
+		m_us_timer->Reset();
+		while (m_input_pin->Read() != GpioPinState::Low){
+			if (m_us_timer->Get() >= max_counter_value){
 				return max_distance;
 			}
 		}
 		auto distance = static_cast<std::uint16_t>(
-			m_us_timer->get() / coefficient
+			m_us_timer->Get() / coefficient
 		);
-		m_us_timer->sleep_for(new_measurement_delay/2);
-		m_us_timer->sleep_for(new_measurement_delay/2);
+		m_us_timer->SleepFor(new_measurement_delay/2);
+		m_us_timer->SleepFor(new_measurement_delay/2);
 		return distance;
 	}
 
 private:
-	timer* m_us_timer;
-	gpio_input* m_input_pin;
-	gpio_output* m_output_pin;
+	Timer* m_us_timer;
+	GpioInput* m_input_pin;
+	GpioOutput* m_output_pin;
 
 	static constexpr auto coefficient          = 58.;
 	static constexpr int max_distance          = 400; 		/* cm */
@@ -72,6 +72,6 @@ private:
 	static constexpr int new_measurement_delay = 100'000;	/* us */
 };
 
-} /* namespace stm32 */
+} /* namespace STM32 */
 
 #endif /* STM32_HCSR04_HPP */

@@ -4,230 +4,379 @@
 #ifndef STM32_PWM_HPP
 #define STM32_PWM_HPP
 
+#include <algorithm>
 #include <cmath>
 #include <cstdint>
-#include <algorithm>
+#include <utility>
+
+#include "__Internal/__Utility.hpp"
 
 #include "main.h"
 
 #if !defined(HAL_TIM_MODULE_ENABLED) /* module check */
-static_assert(false, "HAL TIM module is not enabled!");
+#error "HAL TIM module is not enabled!"
 #endif /* module check */
 
-static_assert(__cplusplus > 201703L, "C++20 required!");
-
-namespace stm32 {
-#if __cpp_nontype_template_args < 201911L
-/* the compiler does not support double as a non-type template parameter */
+namespace STM32 {
 
 /**
-  * @brief A helper class to use double as a non-type template parameter
-  *
-  */
-struct stm32_double {
-	consteval stm32_double(double value) noexcept
-        : m_power_of_ten{
-            [](double d){
-                if (d < 0){
-                	d *= -1;
-                }
-                std::int32_t exponent{};
-                while (true){
-                    auto difference = d - static_cast<int>(d);
-                    if (difference == 0.0){
-                        break;
-                    }
-                    d *= ten;
-                    ++exponent;
-                }
-                return exponent;
-            }(value)
-        },
-		m_value{static_cast<std::int32_t>(
-			value * power(ten, m_power_of_ten)
-        )}
-    { }
+ * @struct PwmInputRangeMax, A utility struct defining the absolute limits for PWM input values.
+ * 
+ * @tparam MinV     Absolute minimum value allowed.
+ * @tparam MaxV     Absolute maximum value allowed.
+ *
+ * This defines the hardware or logical limits. PwmInputRange must be within these bounds.
+ *
+ * @example Usage:
+ * @code {.cpp}
+ * #include <STM32LibraryCollection/Pwm.hpp>
+ *
+ * // Servo motors typically accept 0-180 degrees
+ * using ServoRange = STM32::PwmInputRangeMax<0, 180>;
+ *
+ * // LED brightness 0-255
+ * using LedRange = STM32::PwmInputRangeMax<0, 255>;
+ * @endcode
+ */
+template <std::uint32_t MinV, std::uint32_t MaxV>
+struct PwmInputRangeMax : __Internal::__Range<std::uint32_t, MinV, MaxV> {};
 
-    consteval operator double() const noexcept
-    {
-        return m_value/power(ten, m_power_of_ten);
-    }
+/**
+ * @struct PwmInputRange, A utility struct defining the operational range for PWM input values.
+ * 
+ * @tparam MinV         Minimum operational value.
+ * @tparam MaxV         Maximum operational value.
+ * @tparam DefaultV     Default/initial value (must be within [MinV, MaxV]).
+ *
+ * This defines the range actually used by Set(). Values are clamped to this range.
+ * Must be within the bounds defined by PwmInputRangeMax.
+ *
+ * @example Usage:
+ * @code {.cpp}
+ * #include <STM32LibraryCollection/Pwm.hpp>
+ *
+ * // Servo: 0-180 degrees, starts at 90 (center)
+ * using ServoInput = STM32::PwmInputRange<0, 180, 90>;
+ *
+ * // Throttle: 0-100%, starts at 0 (off)
+ * using ThrottleInput = STM32::PwmInputRange<0, 100, 0>;
+ * @endcode
+ */
+template <std::uint32_t MinV, std::uint32_t MaxV, std::uint32_t DefaultV>
+struct PwmInputRange : __Internal::__Range<std::uint32_t, MinV, MaxV, DefaultV> {};
 
-    static consteval double power(double base, double exponent) noexcept
-    {
-        while (exponent--){
-            base *= base;
-        }
-        return base;
-    }
+/**
+ * @brief IsPwmInputRange, A concept to check if a type is a PwmInputRange.
+ * 
+ * @tparam T        Type to be checked.
+ *
+ * @example Usage:
+ * @code {.cpp}
+ * #include <STM32LibraryCollection/Pwm.hpp>
+ * 
+ * static_assert(STM32::IsPwmInputRange<STM32::PwmInputRange<0, 180, 90>>);
+ * static_assert(!STM32::IsPwmInputRange<int>);
+ * @endcode
+ */
+template <typename T>
+concept IsPwmInputRange =
+    __Internal::__IsRange<T> &&
+    std::same_as<typename T::ValueTypeT, std::uint32_t>;
 
-    std::int32_t m_power_of_ten;
-    std::int32_t m_value;
-    static constexpr double ten = 10.;
+/**
+ * @struct PwmDutyCycleRange, A utility struct defining the duty cycle range for PWM output.
+ *
+ * @tparam MinV     Minimum duty cycle percentage (0.0-100.0).
+ * @tparam MaxV     Maximum duty cycle percentage (0.0-100.0).
+ *
+ * The input range is linearly mapped to this duty cycle range.
+ * Common use cases:
+ * - Servo motors: 2.5% to 12.5% (1ms to 2.5ms pulse at 50Hz)
+ * - LED dimming: 0% to 100%
+ * - Motor control: 0% to 100%
+ *
+ * @example Usage:
+ * @code {.cpp}
+ * #include <STM32LibraryCollection/Pwm.hpp>
+ *
+ * // Standard servo: 2.5% - 12.5% duty cycle
+ * using ServoDuty = STM32::PwmDutyCycleRange<2.5, 12.5>;
+ *
+ * // Full range LED: 0% - 100% duty cycle
+ * using LedDuty = STM32::PwmDutyCycleRange<0.0, 100.0>;
+ * @endcode
+ */
+template <double MinV, double MaxV>
+struct PwmDutyCycleRange : __Internal::__Range<double, MinV, MaxV> {
+    static_assert(
+        MinV >= 0.0 && MaxV <= 100.0,
+        "Duty cycle values must be in the range [0.0, 100.0]"
+    );
 };
 
 /**
-  * @brief A pwm class for STM32 development boards
-  *
-  * Note: A pwm class object must be defined
-  * 	  after all the initializing operations,
-  * 	  for example, in the USER CODE 2 section.
-  */
-template <std::uint32_t InputRangeBegin, std::uint32_t InputRangeEnd,
-		  std::uint32_t MinInput, std::uint32_t MaxInput, std::uint32_t DefaultInput,
-		  stm32_double MinPWMDuty, stm32_double MaxPWMDuty>
-#else
-/* the compiler supports double as a non-type template parameter  */
+ * @brief IsPwmDutyCycleRange, A concept to check if a type is a PwmDutyCycleRange.
+ * 
+ * @tparam T        Type to be checked.
+ *
+ * @example Usage:
+ * @code {.cpp}
+ * #include <STM32LibraryCollection/Pwm.hpp>
+ * 
+ * static_assert(STM32::IsPwmDutyCycleRange<STM32::PwmDutyCycleRange<2.5, 12.0>>);
+ * static_assert(!STM32::IsPwmDutyCycleRange<int>);
+ * @endcode
+ */
+template <typename T>
+concept IsPwmDutyCycleRange =
+    __Internal::__IsRange<T> &&
+    std::same_as<typename T::ValueTypeT, double> &&
+    T::min_value >= 0. &&
+    T::max_value <= 100.;
 
-template <std::uint32_t InputRangeBegin, std::uint32_t InputRangeEnd,
-		  std::uint32_t MinInput, std::uint32_t MaxInput, std::uint32_t DefaultInput,
-		  double MinPWMDuty, double MaxPWMDuty>
+/**
+ * @struct PwmConfig, A utility struct bundling all PWM configuration parameters.
+ * 
+ * @tparam PwmDutyCycleRangeT    Duty cycle output range (in percentage).
+ * @tparam PwmInputRangeT        Operational input range with default value.
+ * @tparam PwmInputRangeMaxT     Absolute input range limits.
+ *
+ * @note PwmInputRangeT must be within bounds of PwmInputRangeMaxT.
+ *
+ * @example Usage:
+ * @code {.cpp}
+ * #include <STM32LibraryCollection/Pwm.hpp>
+ *
+ * // Servo configuration: 0-180 degrees mapped to 2.5%-12.5% duty
+ * using ServoConfig = STM32::PwmConfig<
+ *     STM32::PwmDutyCycleRange<2.5, 12.5>,
+ *     STM32::PwmInputRange<0, 180, 90>,
+ *     STM32::PwmInputRangeMax<0, 180>
+ * >;
+ *
+ * // LED configuration: 0-255 mapped to 0%-100% duty
+ * using LedConfig = STM32::PwmConfig<
+ *     STM32::PwmDutyCycleRange<0.0, 100.0>,
+ *     STM32::PwmInputRange<0, 255, 0>,
+ *     STM32::PwmInputRangeMax<0, 255>
+ * >;
+ * @endcode
+ */
+template <
+    IsPwmDutyCycleRange PwmDutyCycleRangeT,
+    IsPwmInputRange PwmInputRangeT,
+    IsPwmInputRange PwmInputRangeMaxT
+>
+struct PwmConfig : PwmDutyCycleRangeT, PwmInputRangeT, PwmInputRangeMaxT {
+    using DutyCycleRangeT = PwmDutyCycleRangeT;
+    using InputRangeT = PwmInputRangeT;
+    using InputRangeMaxT = PwmInputRangeMaxT;
+    static_assert(
+        InputRangeT::min_value >= InputRangeMaxT::min_value &&
+        InputRangeT::max_value <= InputRangeMaxT::max_value,
+        "PwmInputRangeT must be within PwmInputRangeMaxT"
+    );
+};
 
-#endif /* non-type template parameter check */
-class pwm {
+/**
+ * @brief IsPwmConfig, A concept to check if a type is a valid PwmConfig.
+ * 
+ * @tparam T        Type to be checked.
+ *
+ * @example Usage:
+ * @code {.cpp}
+ * #include <STM32LibraryCollection/Pwm.hpp>
+ * 
+ * using MyPwmConfig = STM32::PwmConfig<
+ *     STM32::PwmDutyCycleRange<2.5, 12.0>,
+ *     STM32::PwmInputRange<0, 180, 90>,
+ *     STM32::PwmInputRangeMax<0, 180>
+ * >;
+ * 
+ * static_assert(STM32::IsPwmConfig<MyPwmConfig>);
+ * static_assert(!STM32::IsPwmConfig<int>);
+ * @endcode
+ */
+template <typename T>
+concept IsPwmConfig =
+    IsPwmDutyCycleRange<typename T::DutyCycleRangeT> &&
+    IsPwmInputRange<typename T::InputRangeT> &&
+    IsPwmInputRange<typename T::InputRangeMaxT> &&
+    T::InputRangeT::min_value >= T::InputRangeMaxT::min_value &&
+    T::InputRangeT::max_value <= T::InputRangeMaxT::max_value &&
+    requires {
+        typename T::DutyCycleRangeT;
+        typename T::InputRangeT;
+        typename T::InputRangeMaxT;
+    };
+
+/**
+ * @class Pwm, A class to manage PWM output on STM32 microcontrollers.
+ * 
+ * @tparam PwmConfigT   PWM configuration type defining input/output ranges.
+ *
+ * @note Pwm class is non-copyable and non-movable.
+ * @note PWM starts automatically upon construction with the default value.
+ * @note PWM stops automatically upon destruction.
+ *
+ * @example Usage:
+ * @code {.cpp}
+ * #include <STM32LibraryCollection/Pwm.hpp>
+ *
+ * TIM_HandleTypeDef htim1; // Assume properly initialized by CubeMX
+ *
+ * // LED brightness control (0-255 input, 0-100% duty)
+ * using LedPwm = STM32::Pwm<STM32::PwmConfig<
+ *     STM32::PwmDutyCycleRange<0.0, 100.0>,
+ *     STM32::PwmInputRange<0, 255, 0>,
+ *     STM32::PwmInputRangeMax<0, 255>
+ * >>;
+ * LedPwm led{htim1, TIM_CHANNEL_1};
+ * led.Set(128);                    // Set to ~50% brightness
+ * auto brightness = led.Get();     // Read current value
+ *
+ * // For servo control, use the Servo typedef instead
+ * @endcode
+ */
+template <IsPwmConfig PwmConfigT>
+class Pwm {
 public:
-	static_assert(
-		InputRangeBegin <= MinInput,
-		"the minimum input cannot be less than the input range begin!"
-	);
-	static_assert(
-		MaxInput <= InputRangeEnd,
-		"the maximum input cannot be greater than the input range end!"
-	);
-	static_assert(
-		InputRangeBegin <= InputRangeEnd,
-		"the input range begin cannot be greater than the input range end!"
-	);
-	static_assert(
-		MinInput <= MaxInput,
-		"the minimum input cannot be greater than the maximum input!"
-	);
-	static_assert(
-		MinInput <= DefaultInput && DefaultInput <= MaxInput,
-		"the default input must be in the range between the minimum and the maximum inputs!"
-	);
-	static_assert(
-		0 <= MinPWMDuty,
-		"the minimum pwm duty cycle percentage cannot be negative!"
-	);
-	static_assert(
-		MaxPWMDuty <= 100,
-		"the maximum pwm duty cycle percentage cannot be greater than 100!"
-	);
 
-	pwm(TIM_HandleTypeDef& timer_handle, std::uint32_t timer_channel) noexcept
-	: m_timer_handle{&timer_handle},
-	  m_timer_channel{timer_channel},
-	  m_pwm_resolution{m_timer_handle->Init.Period + 1}
-	{
-		HAL_TIM_PWM_Start(m_timer_handle, m_timer_channel);
-		set(DefaultInput);
-	}
+    /**
+     * @brief Construct Pwm class.
+     * 
+     * @param timer_handle      Reference to the TIM handle.
+     * @param timer_channel     Timer channel for PWM output.
+     *
+     * @note Pwm starts automatically upon construction.
+     */
+    Pwm(TIM_HandleTypeDef& timer_handle, std::uint32_t timer_channel) noexcept
+      : m_timer_handle{timer_handle},
+        m_timer_channel{timer_channel}
+    {
+        HAL_TIM_PWM_Start(&m_timer_handle, m_timer_channel);
+        Set(PwmConfigT::InputRangeT::default_value);
+    }
 
-	pwm(const pwm&) = delete;
-	pwm& operator=(const pwm&) = delete;
-	pwm(pwm&&) = delete;
-	pwm& operator=(pwm&&) = delete;
+    /**
+     * @defgroup Deleted copy and move members.
+     * @{
+     */
+    Pwm(const Pwm&) = delete;
+    Pwm& operator=(const Pwm&) = delete;
+    Pwm(Pwm&&) = delete;
+    Pwm& operator=(Pwm&&) = delete;
+    /** @} */
 
-	~pwm()
-	{
-		HAL_TIM_PWM_Stop(m_timer_handle, m_timer_channel);
-	}
+    /**
+     * @brief Destroy the Pwm object, stops PWM.
+     */
+    ~Pwm()
+    {
+        HAL_TIM_PWM_Stop(&m_timer_handle, m_timer_channel);
+    }
 
-	[[nodiscard]]
-	TIM_HandleTypeDef* get_timer_handle() const noexcept
-	{
-		return m_timer_handle;
-	}
+    /**
+     * @returns TIM handle reference.
+     */
+    [[nodiscard]]
+    auto&& GetTimerHandle(this auto&& self) noexcept
+    {
+        return std::forward<decltype(self)>(self).m_timer_handle;
+    }
 
-	[[nodiscard]]
-	std::uint32_t get_timer_channel() const noexcept
-	{
-		return m_timer_channel;
-	}
+    /**
+     * @returns Timer channel.
+     */
+    [[nodiscard]]
+    std::uint32_t GetTimerChannel() const noexcept
+    {
+        return m_timer_channel;
+    }
 
-	[[nodiscard]]
-	std::uint32_t get() const noexcept
-	{
-		return convert_to_input(
-			__HAL_TIM_GET_COMPARE(m_timer_handle, m_timer_channel)
-		);
-	}
+    /**
+     * @returns Current input value corresponding to the PWM duty cycle.
+     */
+    [[nodiscard]]
+    std::uint32_t Get() const noexcept
+    {
+        return ConvertToInput(
+            __HAL_TIM_GET_COMPARE(&m_timer_handle, m_timer_channel)
+        );
+    }
 
-	void set(double input) noexcept
-	{
-		input = std::clamp(
-			input,
-			static_cast<double>(MinInput),
-			static_cast<double>(MaxInput)
-		);
-		__HAL_TIM_SET_COMPARE(
-			m_timer_handle,
-			m_timer_channel,
-			convert_to_pwm(input)
-		);
-	}
+    /**
+     * @brief Set the PWM duty cycle based on the input value.
+     * 
+     * @param input     Input value to set the PWM duty cycle.
+     */
+    void Set(double input) noexcept
+    {
+        __HAL_TIM_SET_COMPARE(
+            &m_timer_handle,
+            m_timer_channel,
+            ConvertToPwm(
+                std::clamp(
+                    input,
+                    static_cast<double>(PwmConfigT::InputRangeT::min_value),
+                    static_cast<double>(PwmConfigT::InputRangeT::max_value)
+                )
+            )
+        );
+    }
 
 private:
-	TIM_HandleTypeDef* m_timer_handle;
-	std::uint32_t m_timer_channel;
-	std::uint32_t m_pwm_resolution;
-	double m_min_pwm_value{
-		(m_pwm_resolution * MinPWMDuty) / 100.
-	};
-	double m_max_pwm_value{
-		(m_pwm_resolution * MaxPWMDuty) / 100.
-	};
-	double m_pwm_value_resolution{
-		m_max_pwm_value - m_min_pwm_value
-	};
+    TIM_HandleTypeDef& m_timer_handle;
+    std::uint32_t m_timer_channel;
+    std::uint32_t m_pwm_resolution{
+        m_timer_handle.Init.Period + 1
+    };
+    double m_min_pwm_value{
+        (m_pwm_resolution * PwmConfigT::DutyCycleRangeT::min_value) / 100.
+    };
+    double m_max_pwm_value{
+        (m_pwm_resolution * PwmConfigT::DutyCycleRangeT::max_value) / 100.
+    };
+    double m_pwm_value_resolution{
+        m_max_pwm_value - m_min_pwm_value
+    };
 
-	constexpr int convert_to_pwm(double input) const noexcept
-	{
-		return static_cast<int>(
-			m_min_pwm_value +
-			((input - InputRangeBegin) / (InputRangeEnd - InputRangeBegin)) *
-			m_pwm_value_resolution
-		);
-	}
+    /**
+     * @brief Convert input value to PWM value.
+     * 
+     * @param input     Input value to convert.
+     * 
+     * @returns Corresponding PWM value.
+     */
+    constexpr auto ConvertToPwm(double input) const noexcept
+    {
+        return static_cast<std::uint32_t>(
+            m_min_pwm_value +
+            (
+                (input - PwmConfigT::InputRangeMaxT::min_value) / 
+                (PwmConfigT::InputRangeMaxT::range_size)
+            ) *
+            m_pwm_value_resolution
+        );
+    }
 
-	constexpr auto convert_to_input(int pwm_value) const noexcept
-	{
-		return static_cast<std::uint32_t>(std::round(
-			(InputRangeEnd - InputRangeBegin) *
-			((pwm_value - m_min_pwm_value) / m_pwm_value_resolution)) +
-			InputRangeBegin
-		);
-	}
+    /**
+     * @brief Convert PWM value to input value.
+     * 
+     * @param pwm_value     PWM value to convert.
+     * 
+     * @returns Corresponding input value.
+     */
+    constexpr auto ConvertToInput(int pwm_value) const noexcept
+    {
+        return static_cast<std::uint32_t>(std::round(
+            (PwmConfigT::InputRangeMaxT::range_size) *
+            ((pwm_value - m_min_pwm_value) / m_pwm_value_resolution)) +
+            PwmConfigT::InputRangeMaxT::min_value
+        );
+    }
 };
 
-/**
-  * @brief type alias for servo motors
-  *
-  */
-using servo = pwm<0, 180, 0, 180, 90, 2.5, 12.>;
-
-/**
-  * Example;
-  *
-  * stm32::servo vertical_servo(htim2, TIM_CHANNEL_1);
-  * vertical_servo.set(125);
-  */
-
-/**
-  * TIM2 specs for STM32F4-DISC at 168 MHz for servo motors;
-  * peripheral_frequency = 84'000'000;
-  * prescaler            = 27;
-  * counter_period		 = 59'999;
-  */
-
-/**
-  * TIM2 specs for NUCLEO-F446RE at 180 MHz for servo motors;
-  * peripheral_frequency = 90'000'000;
-  * prescaler            = 29;
-  * counter_period		 = 59'999;
-  */
-
-} /* namespace stm32 */
+} /* namespace STM32 */
 
 #endif /* STM32_PWM_HPP */

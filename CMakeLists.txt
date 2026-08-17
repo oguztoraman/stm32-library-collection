@@ -18,12 +18,24 @@ set(STM32LibraryCollection_INCLUDE_DIR
 )
 
 set(STM32LibraryCollection_HEADER_FILES
+    ${STM32LibraryCollection_INCLUDE_DIR}/__Internal/__CallbackManager.hpp
+    ${STM32LibraryCollection_INCLUDE_DIR}/__Internal/__Constant.hpp
+    ${STM32LibraryCollection_INCLUDE_DIR}/__Internal/__InplaceFunction.hpp
+    ${STM32LibraryCollection_INCLUDE_DIR}/__Internal/__Message.hpp
+    ${STM32LibraryCollection_INCLUDE_DIR}/__Internal/__Range.hpp
+    ${STM32LibraryCollection_INCLUDE_DIR}/__Internal/__UniqueTag.hpp
+    ${STM32LibraryCollection_INCLUDE_DIR}/__Internal/__Utility.hpp
     ${STM32LibraryCollection_INCLUDE_DIR}/Adc.hpp
+    ${STM32LibraryCollection_INCLUDE_DIR}/Config.hpp
+    ${STM32LibraryCollection_INCLUDE_DIR}/Crc16.hpp
     ${STM32LibraryCollection_INCLUDE_DIR}/Dac.hpp
     ${STM32LibraryCollection_INCLUDE_DIR}/Gpio.hpp
     ${STM32LibraryCollection_INCLUDE_DIR}/Hcsr04.hpp
+    ${STM32LibraryCollection_INCLUDE_DIR}/I2c.hpp
     ${STM32LibraryCollection_INCLUDE_DIR}/L298n.hpp
     ${STM32LibraryCollection_INCLUDE_DIR}/Pwm.hpp
+    ${STM32LibraryCollection_INCLUDE_DIR}/Servo.hpp
+    ${STM32LibraryCollection_INCLUDE_DIR}/Spi.hpp
     ${STM32LibraryCollection_INCLUDE_DIR}/Timer.hpp
     ${STM32LibraryCollection_INCLUDE_DIR}/Uart.hpp
 )
